@@ -8,7 +8,9 @@ pipeline {
     stages {
         stage('Clone') {
             steps {
-                echo 'Récupération du projet...'
+                git branch: 'master',
+                    url: 'https://github.com/abdmoussaoui/calculator.git',
+                    credentialsId: 'github-pat'
             }
         }
 
