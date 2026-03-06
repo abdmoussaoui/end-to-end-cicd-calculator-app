@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Smart Calculator</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="container">
+    <h1>Smart Calculator</h1>
+    <p>Mini application Node.js + Express + Jenkins</p>
+
+    <div class="card">
+      <input type="number" id="num1" placeholder="Premier nombre" />
+      <input type="number" id="num2" placeholder="Deuxième nombre" />
+
+      <select id="operation">
+        <option value="add">Addition</option>
+        <option value="sub">Soustraction</option>
+        <option value="mul">Multiplication</option>
+        <option value="div">Division</option>
+      </select>
+
+      <button onclick="calculate()">Calculer</button>
+
+      <div id="result" class="result"></div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
