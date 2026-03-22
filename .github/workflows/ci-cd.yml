@@ -1,24 +1,20 @@
-name: Calculator DevOps Pipeline
+name: Calculator CI/CD
 
 on:
   push:
     branches:
-      - master
       - main
-  pull_request:
-    branches:
       - master
-      - main
 
 jobs:
-  build-test-docker:
+  build-test-push-deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Clone repository
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js 18
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 18
@@ -30,28 +26,28 @@ jobs:
       - name: Run tests
         run: npm test
 
-      - name: Build validation
-        run: echo "Build terminé avec succès."
-
-      - name: Log in to Docker Hub
-        if: github.event_name == 'push'
+      - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Build Docker image
-        if: github.event_name == 'push'
-        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/calculator-app:latest .
+      - name: Build and push Docker images
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ secrets.DOCKER_USERNAME }}/calculator-app:latest
+            ${{ secrets.DOCKER_USERNAME }}/calculator-app:${{ github.sha }}
 
-      - name: Push Docker image to Docker Hub
-        if: github.event_name == 'push'
-        run: docker push ${{ secrets.DOCKER_USERNAME }}/calculator-app:latest
-
-      - name: Success message
-        if: success()
-        run: echo "Bravo, pipeline exécuté avec succès !"
-
-      - name: Failure message
-        if: failure()
-        run: echo "Le pipeline a échoué."
+      - name: Deploy to Kubernetes on AWS
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.MASTER_PUBLIC_IP }}
+          username: ubuntu
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            sudo kubectl set image deployment/calculator-app \
+              calculator-app=${{ secrets.DOCKER_USERNAME }}/calculator-app:${{ github.sha }}
+            sudo kubectl rollout status deployment/calculator-app
