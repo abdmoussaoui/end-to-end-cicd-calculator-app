@@ -48,6 +48,6 @@ jobs:
           username: ubuntu
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            sudo kubectl set image deployment/calculator-app \
-              calculator-app=${{ secrets.DOCKER_USERNAME }}/calculator-app:${{ github.sha }}
-            sudo kubectl rollout status deployment/calculator-app
+            sudo kubectl set image deployment/calculator-app calculator-app=${{ secrets.DOCKER_USERNAME }}/calculator-app:${{ github.sha }}
+            sudo kubectl rollout status deployment/calculator-app --timeout=180s
+            sudo kubectl get pods
