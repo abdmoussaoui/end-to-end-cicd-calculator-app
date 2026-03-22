@@ -32,12 +32,14 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Build and push Docker image
+      - name: Build and push Docker images
         uses: docker/build-push-action@v6
         with:
           context: .
           push: true
-          tags: ${{ secrets.DOCKER_USERNAME }}/calculator-app:latest
+          tags: |
+            ${{ secrets.DOCKER_USERNAME }}/calculator-app:latest
+            ${{ secrets.DOCKER_USERNAME }}/calculator-app:${{ github.sha }}
 
       - name: Deploy to Kubernetes on AWS
         uses: appleboy/ssh-action@v1.0.3
@@ -48,6 +50,23 @@ jobs:
           script_stop: true
           debug: true
           script: |
-            sudo kubectl rollout restart deployment/calculator-app
+            echo "=== whoami ==="
+            whoami
+
+            echo "=== kubectl version ==="
+            sudo kubectl version --client
+
+            echo "=== current deployments ==="
+            sudo kubectl get deployment
+
+            echo "=== set image ==="
+            sudo kubectl set image deployment/calculator-app calculator-app=${{ secrets.DOCKER_USERNAME }}/calculator-app:${{ github.sha }}
+
+            echo "=== rollout status ==="
             sudo kubectl rollout status deployment/calculator-app --timeout=180s
+
+            echo "=== pods ==="
             sudo kubectl get pods -o wide
+
+            echo "=== describe deployment ==="
+            sudo kubectl describe deployment calculator-app
