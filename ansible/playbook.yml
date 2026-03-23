@@ -1,0 +1,34 @@
+- name: Install K3s on master
+  hosts: master
+  become: true
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+
+    - name: Install curl
+      apt:
+        name: curl
+        state: present
+
+    - name: Install K3s server without Traefik
+      shell: curl -sfL https://get.k3s.io | INSTALL_K3S_EXEC="--disable traefik" sh>      args:
+        creates: /usr/local/bin/k3s
+
+    - name: Wait for node-token file
+      wait_for:
+        path: /var/lib/rancher/k3s/server/node-token
+        timeout: 120
+
+    - name: Read K3s token
+      slurp:
+        src: /var/lib/rancher/k3s/server/node-token
+      register: k3s_token_raw
+
+    - name: Set K3s token fact
+      set_fact:
+        k3s_token: "{{ k3s_token_raw.content | b64decode | trim }}"
+
+    - name: Show master private IP
+      debug:
+        msg: "Master private IP is {{ ansible_default_ipv4.address }}"
